@@ -1,6 +1,7 @@
 const Bootcamp = require('../models/Bootcamp')
 const errorResponse = require('../utils/errorResponse')
 const asyncHandler = require('../utils/async')
+const geocoder = require('../utils/geocoder')
 //@desc get all bootcamps
 //@route GET /api/v1/bootcamps
 //@access public
@@ -66,4 +67,29 @@ exports.deleteBootcamp = asyncHandler(async (req,res,next) => {
         return next(new errorResponse(`Resouce not found with id ${req.params.id}`,400))
     }
     res.status(200).json({success:true,data:{}})
+})
+
+//@desc Filter Bootcamps with city postal code and distance radius
+//@route GET /api/v1/bootcamps/radius/:postalCode/:distance
+//@access private
+
+exports.getBootcampsWithRadius = asyncHandler(async (req,res,next) => { 
+    //Earth Radius in miles 3963
+    //fetching longitude and latitude from postal code 
+    const loc = await geocoder.geocode(req.params.postCode)
+    const lng = loc[0].longitude
+    const lat = loc[0].latitude
+    const radius = req.params.distance / 3963
+    const bootcamps = await Bootcamp.find({
+        location :{ 
+            $geoWithin : { 
+                $centerSphere : [[lng,lat],radius]
+            }
+        }
+    })
+    res.status(200).json({
+        success:true,
+        count:bootcamps.length,
+        data:bootcamps
+    })
 })
