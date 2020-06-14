@@ -9,6 +9,12 @@ const {
     getBootcampsWithRadius
 } = require('../controllers/bootcamps')
 
+//import external resource
+var courseRouter = require('./courses')
+
+//re-route to external router
+router.use('/:bootcamp/courses', courseRouter)
+
 router.route('/radius/:postCode/:distance').get(getBootcampsWithRadius)
 router.route('/')
     .get(getBootcamps)
